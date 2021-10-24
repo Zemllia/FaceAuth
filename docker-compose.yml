@@ -1,0 +1,35 @@
+version: '3.7'
+services:
+  face_auth_nginx:
+    container_name: face_auth_web
+    restart: on-failure
+    image: nginx:1.19.8
+    volumes:
+      - ./nginx/prod/nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/app/static
+    ports:
+      - 80:80
+    depends_on:
+      - face_auth_web
+  face_auth_web:
+    container_name: face_auth_backend
+    build: .
+    restart: always
+    env_file: dev.env
+    command: gunicorn FaceAuth.wsgi:application --bind 0.0.0.0:5000
+    volumes:
+     - .:/app
+     - static_volume:/app/static
+    expose:
+      - 5000
+    depends_on:
+     - face_auth_db
+  face_auth_db:
+    container_name: face_auth_db
+    image: postgres
+    env_file: dev.env
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data/
+
+volumes:
+  static_volume:
